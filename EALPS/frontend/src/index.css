@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-slate-950 text-slate-100 font-sans;
+}
+
+.glass {
+  @apply bg-white/5 border border-white/10 backdrop-blur-sm;
+}
+
+/* React Flow dark theme override */
+.react-flow__background { background: transparent !important; }
+.react-flow__edge-path  { stroke: #4f6ef7 !important; }
