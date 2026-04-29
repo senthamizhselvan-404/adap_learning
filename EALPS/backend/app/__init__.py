@@ -11,6 +11,21 @@ logging.basicConfig(
 logger = logging.getLogger('ealps')
 
 
+def _migrate_db():
+    """Add new columns to existing SQLite DB (safe to run on every startup)."""
+    migrations = [
+        "ALTER TABLE learners ADD COLUMN oauth_provider VARCHAR(50)",
+        "ALTER TABLE learners ADD COLUMN oauth_id VARCHAR(255)",
+    ]
+    with db.engine.connect() as conn:
+        for sql in migrations:
+            try:
+                conn.execute(db.text(sql))
+                conn.commit()
+            except Exception:
+                pass  # column already exists
+
+
 def create_app(config=Config):
     app = Flask(__name__)
     app.config.from_object(config)
@@ -84,6 +99,7 @@ def create_app(config=Config):
     from .routes.skills     import skills_bp
     from .routes.admin      import admin_bp
     from .routes.curriculum import curriculum_bp
+    from .routes.schedules  import schedules_bp
 
     app.register_blueprint(auth_bp,       url_prefix='/api/v1/auth')
     app.register_blueprint(learners_bp,   url_prefix='/api/v1/learners')
@@ -91,6 +107,7 @@ def create_app(config=Config):
     app.register_blueprint(skills_bp,     url_prefix='/api/v1/skills')
     app.register_blueprint(admin_bp,      url_prefix='/api/v1/admin')
     app.register_blueprint(curriculum_bp, url_prefix='/api/v1/curriculum')
+    app.register_blueprint(schedules_bp,  url_prefix='/api/v1/schedules')
 
     # ── Health check ───────────────────────────────────────────────────────
     @app.route('/health')
@@ -104,6 +121,7 @@ def create_app(config=Config):
 
     with app.app_context():
         db.create_all()
+        _migrate_db()
         logger.info('EALPS backend started')
 
     return app

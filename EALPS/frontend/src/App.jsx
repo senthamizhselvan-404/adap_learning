@@ -2,14 +2,15 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { createContext, useContext, useState, useEffect } from 'react'
 import api from './api/client'
 
-import Login    from './pages/Login'
-import Register from './pages/Register'
-import Dashboard from './pages/Dashboard'
-import Roadmap  from './pages/Roadmap'
-import Skills   from './pages/Skills'
-import Admin    from './pages/Admin'
-import Curriculum from './pages/Curriculum'
-import Navbar   from './components/Navbar'
+import Login         from './pages/Login'
+import Register      from './pages/Register'
+import Dashboard     from './pages/Dashboard'
+import Roadmap       from './pages/Roadmap'
+import Skills        from './pages/Skills'
+import Admin         from './pages/Admin'
+import Curriculum    from './pages/Curriculum'
+import OAuthCallback from './pages/OAuthCallback'
+import Navbar        from './components/Navbar'
 
 export const AuthContext = createContext(null)
 
@@ -61,14 +62,15 @@ export default function App() {
         {user && <Navbar />}
         <div className={user ? 'pt-16' : ''}>
           <Routes>
-            <Route path="/login"    element={user ? <Navigate to="/dashboard" /> : <Login />} />
-            <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/roadmap/:id?" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
-            <Route path="/skills"   element={<ProtectedRoute><Skills /></ProtectedRoute>} />
-            <Route path="/curriculum" element={<ProtectedRoute><Curriculum /></ProtectedRoute>} />
-            <Route path="/admin"    element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
-            <Route path="*"        element={<Navigate to={user ? '/dashboard' : '/login'} />} />
+            <Route path="/login"         element={user ? <Navigate to="/dashboard" /> : <Login />} />
+            <Route path="/register"      element={user ? <Navigate to="/dashboard" /> : <Register />} />
+            <Route path="/auth/callback" element={<OAuthCallback />} />
+            <Route path="/dashboard"     element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/roadmap/:id?"  element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
+            <Route path="/skills"        element={<ProtectedRoute><Skills /></ProtectedRoute>} />
+            <Route path="/curriculum"    element={<ProtectedRoute><Curriculum /></ProtectedRoute>} />
+            <Route path="/admin"         element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
+            <Route path="*"              element={<Navigate to={user ? '/dashboard' : '/login'} />} />
           </Routes>
         </div>
       </BrowserRouter>

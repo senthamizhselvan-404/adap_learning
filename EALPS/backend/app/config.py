@@ -42,6 +42,14 @@ class Config:
         'CORS_ORIGINS', 'http://localhost:5173,http://localhost:3000'
     ).split(',')
 
+    # ── OAuth ─────────────────────────────────────────────────────────────────
+    GOOGLE_CLIENT_ID     = os.environ.get('GOOGLE_CLIENT_ID',     '')
+    GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+    GITHUB_CLIENT_ID     = os.environ.get('GITHUB_CLIENT_ID',     '')
+    GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET', '')
+    BACKEND_URL          = os.environ.get('BACKEND_URL',  'http://localhost:5000')
+    FRONTEND_URL         = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+
     # ── Rate limiting ─────────────────────────────────────────────────────────
     RATELIMIT_DEFAULT          = '200 per minute'
     RATELIMIT_STORAGE_URL      = 'memory://'

@@ -90,6 +90,7 @@ def create_curriculum():
                         abstraction_level  = 0.5,
                     )
                     db.session.add(sds)
+                    db.session.flush()  # ensure sds is queryable before to_dict()
 
                 extracted_skills.append(skill.to_dict())
 

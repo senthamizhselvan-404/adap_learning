@@ -26,12 +26,14 @@ class Learner(db.Model):
 
     learner_id      = db.Column(db.String(36), primary_key=True, default=gen_uuid)
     email           = db.Column(db.String(255), unique=True, nullable=False, index=True)
-    password_hash   = db.Column(db.String(255), nullable=False)
+    password_hash   = db.Column(db.String(255), nullable=False, default='')
     full_name       = db.Column(db.String(200), nullable=False)
     role            = db.Column(db.String(20), nullable=False, default='learner')
     is_active       = db.Column(db.Boolean, default=True, nullable=False)
     prior_skills    = db.Column(db.JSON, nullable=True)
     effort_capacity = db.Column(db.Float, nullable=False, default=10.0)
+    oauth_provider  = db.Column(db.String(50),  nullable=True)
+    oauth_id        = db.Column(db.String(255), nullable=True, index=True)
     created_at      = db.Column(db.DateTime, default=datetime.utcnow)
     last_active     = db.Column(db.DateTime, nullable=True)
 
@@ -47,6 +49,7 @@ class Learner(db.Model):
             'is_active':       self.is_active,
             'prior_skills':    self.prior_skills or [],
             'effort_capacity': self.effort_capacity,
+            'oauth_provider':  self.oauth_provider,
             'created_at':      self.created_at.isoformat(),
             'last_active':     self.last_active.isoformat() if self.last_active else None,
         }
