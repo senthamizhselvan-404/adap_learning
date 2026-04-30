@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../App'
-import { LayoutDashboard, Map, BookOpen, FileText, Shield, LogOut } from 'lucide-react'
+import { LayoutDashboard, Map, BookOpen, FileText, Shield, LogOut, Terminal, Youtube } from 'lucide-react'
 
 export default function Navbar() {
   const { user, logout } = useAuth()
@@ -10,6 +10,8 @@ export default function Navbar() {
     { to: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/roadmap',    icon: Map,              label: 'Roadmap' },
     { to: '/skills',     icon: BookOpen,         label: 'Skills' },
+    { to: '/ide',        icon: Terminal,         label: 'IDE' },
+    { to: '/youtube',    icon: Youtube,          label: 'YouTube' },
     { to: '/curriculum', icon: FileText,         label: 'Curriculum' },
     ...(user?.role === 'admin' ? [{ to: '/admin', icon: Shield, label: 'Admin' }] : []),
   ]

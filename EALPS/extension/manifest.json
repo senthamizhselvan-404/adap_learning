@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "EALPS YouTube Tracker",
+  "version": "1.0.0",
+  "description": "Track YouTube learning videos in your EALPS adaptive pathway.",
+
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "http://localhost:5000/*"
+  ],
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "EALPS Learning Tracker",
+    "default_icon": {
+      "16":  "icons/icon16.png",
+      "48":  "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/watch*"],
+      "js": ["content_script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "icons": {
+    "16":  "icons/icon16.png",
+    "48":  "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

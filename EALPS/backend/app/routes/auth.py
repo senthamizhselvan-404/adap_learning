@@ -177,11 +177,20 @@ def _find_or_create_learner(provider, provider_id, email, name):
 # Google OAuth
 # ─────────────────────────────────────────
 
+@auth_bp.route('/oauth/status', methods=['GET'])
+def oauth_status():
+    """Return which OAuth providers are configured (no secrets exposed)."""
+    return jsonify({
+        'google': bool(current_app.config.get('GOOGLE_CLIENT_ID')),
+        'github': bool(current_app.config.get('GITHUB_CLIENT_ID')),
+    })
+
+
 @auth_bp.route('/google')
 def google_login():
     client_id = current_app.config.get('GOOGLE_CLIENT_ID', '')
     if not client_id:
-        return jsonify({'error': 'Google OAuth is not configured on this server'}), 503
+        return _oauth_error_redirect('not_configured')
 
     backend_url  = current_app.config.get('BACKEND_URL', 'http://localhost:5000')
     redirect_uri = f'{backend_url}/api/v1/auth/google/callback'
@@ -219,6 +228,8 @@ def google_callback():
         }, timeout=15)
         token_resp.raise_for_status()
         g_access_token = token_resp.json().get('access_token')
+        if not g_access_token:
+            return _oauth_error_redirect('token_exchange_failed')
     except Exception:
         return _oauth_error_redirect('token_exchange_failed')
 
@@ -256,7 +267,7 @@ def google_callback():
 def github_login():
     client_id = current_app.config.get('GITHUB_CLIENT_ID', '')
     if not client_id:
-        return jsonify({'error': 'GitHub OAuth is not configured on this server'}), 503
+        return _oauth_error_redirect('not_configured')
 
     backend_url  = current_app.config.get('BACKEND_URL', 'http://localhost:5000')
     redirect_uri = f'{backend_url}/api/v1/auth/github/callback'

@@ -299,3 +299,168 @@ class ProgressRecord(db.Model):
             'is_completed': self.is_completed,
             'logged_at':    self.logged_at.isoformat(),
         }
+
+
+# ─────────────────────────────────────────
+# Practice Problem
+# ─────────────────────────────────────────
+class PracticeProblem(db.Model):
+    __tablename__ = 'practice_problems'
+
+    problem_id          = db.Column(db.String(36), primary_key=True, default=gen_uuid)
+    title               = db.Column(db.String(300), nullable=False, index=True)
+    description         = db.Column(db.Text, nullable=False)
+    difficulty          = db.Column(db.Integer, nullable=False, default=3)
+    skill_id            = db.Column(db.String(36), db.ForeignKey('skills.skill_id'), nullable=True, index=True)
+    languages_supported = db.Column(db.JSON, nullable=False, default=['python'])
+    time_limit          = db.Column(db.Integer, nullable=False, default=5)
+    memory_limit        = db.Column(db.Integer, nullable=False, default=256)
+    created_at          = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at          = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    skill = db.relationship('Skill')
+    test_cases = db.relationship('ProblemTestCase', backref='problem', lazy='dynamic', cascade='all, delete-orphan')
+    solutions = db.relationship('ProblemSolution', backref='problem', lazy='dynamic', cascade='all, delete-orphan')
+
+    def to_dict(self, include_test_cases=False):
+        d = {
+            'problem_id':           self.problem_id,
+            'title':                self.title,
+            'description':          self.description,
+            'difficulty':           self.difficulty,
+            'skill_id':             self.skill_id,
+            'skill_name':           self.skill.skill_name if self.skill else None,
+            'languages_supported':  self.languages_supported,
+            'time_limit':           self.time_limit,
+            'memory_limit':         self.memory_limit,
+            'created_at':           self.created_at.isoformat(),
+        }
+        if include_test_cases:
+            d['test_cases'] = [tc.to_dict() for tc in self.test_cases.filter_by(is_hidden=False).all()]
+        return d
+
+
+# ─────────────────────────────────────────
+# Problem Test Case
+# ─────────────────────────────────────────
+class ProblemTestCase(db.Model):
+    __tablename__ = 'problem_test_cases'
+
+    test_case_id     = db.Column(db.String(36), primary_key=True, default=gen_uuid)
+    problem_id       = db.Column(db.String(36), db.ForeignKey('practice_problems.problem_id'), nullable=False, index=True)
+    input_data       = db.Column(db.Text, nullable=False)
+    expected_output  = db.Column(db.Text, nullable=False)
+    is_hidden        = db.Column(db.Boolean, default=False)
+    created_at       = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'test_case_id':    self.test_case_id,
+            'input':           self.input_data,
+            'expected_output': self.expected_output,
+            'is_hidden':       self.is_hidden,
+        }
+
+
+# ─────────────────────────────────────────
+# Problem Solution (Learner Submission)
+# ─────────────────────────────────────────
+class ProblemSolution(db.Model):
+    __tablename__ = 'problem_solutions'
+
+    __table_args__ = (
+        db.Index('ix_problem_solutions_learner_problem', 'learner_id', 'problem_id'),
+    )
+
+    solution_id    = db.Column(db.String(36), primary_key=True, default=gen_uuid)
+    problem_id     = db.Column(db.String(36), db.ForeignKey('practice_problems.problem_id'), nullable=False)
+    learner_id     = db.Column(db.String(36), db.ForeignKey('learners.learner_id'), nullable=False, index=True)
+    code           = db.Column(db.Text, nullable=False)
+    language       = db.Column(db.String(20), nullable=False, default='python')
+    status         = db.Column(db.String(20), nullable=False, default='submitted')
+    test_results   = db.Column(db.JSON, nullable=True)
+    execution_time = db.Column(db.Float, nullable=True)
+    score          = db.Column(db.Float, nullable=True)
+    submitted_at   = db.Column(db.DateTime, default=datetime.utcnow)
+    last_executed_at = db.Column(db.DateTime, nullable=True)
+
+    def to_dict(self):
+        return {
+            'solution_id':       self.solution_id,
+            'problem_id':        self.problem_id,
+            'learner_id':        self.learner_id,
+            'language':          self.language,
+            'status':            self.status,
+            'test_results':      self.test_results,
+            'execution_time':    self.execution_time,
+            'score':             self.score,
+            'submitted_at':      self.submitted_at.isoformat(),
+            'last_executed_at':  self.last_executed_at.isoformat() if self.last_executed_at else None,
+        }
+
+
+# ─────────────────────────────────────────
+# YouTube Video Track (Chrome Extension)
+# ─────────────────────────────────────────
+class VideoTrack(db.Model):
+    __tablename__ = 'video_tracks'
+
+    __table_args__ = (
+        db.UniqueConstraint('learner_id', 'video_id', name='uq_learner_video'),
+    )
+
+    track_id     = db.Column(db.String(36), primary_key=True, default=gen_uuid)
+    learner_id   = db.Column(db.String(36), db.ForeignKey('learners.learner_id'), nullable=False, index=True)
+    video_id     = db.Column(db.String(50),  nullable=False, index=True)
+    video_title  = db.Column(db.String(500), nullable=True)
+    channel_name = db.Column(db.String(200), nullable=True)
+    skill_id     = db.Column(db.String(36),  db.ForeignKey('skills.skill_id'), nullable=True)
+    total_watched_seconds = db.Column(db.Integer,  default=0,     nullable=False)
+    is_completed          = db.Column(db.Boolean,  default=False,  nullable=False)
+    created_at   = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at   = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'track_id':             self.track_id,
+            'video_id':             self.video_id,
+            'video_title':          self.video_title,
+            'channel_name':         self.channel_name,
+            'skill_id':             self.skill_id,
+            'total_watched_seconds': self.total_watched_seconds,
+            'is_completed':         self.is_completed,
+        }
+
+
+# ─────────────────────────────────────────
+# Practice Session
+# ─────────────────────────────────────────
+class PracticeSession(db.Model):
+    __tablename__ = 'practice_sessions'
+
+    __table_args__ = (
+        db.Index('ix_practice_sessions_learner', 'learner_id'),
+    )
+
+    session_id              = db.Column(db.String(36), primary_key=True, default=gen_uuid)
+    learner_id              = db.Column(db.String(36), db.ForeignKey('learners.learner_id'), nullable=False)
+    skill_id                = db.Column(db.String(36), db.ForeignKey('skills.skill_id'), nullable=True)
+    total_problems_attempted = db.Column(db.Integer, default=0)
+    total_problems_solved    = db.Column(db.Integer, default=0)
+    total_duration          = db.Column(db.Integer, default=0)
+    average_score           = db.Column(db.Float, nullable=True)
+    started_at              = db.Column(db.DateTime, default=datetime.utcnow)
+    ended_at                = db.Column(db.DateTime, nullable=True)
+
+    def to_dict(self):
+        return {
+            'session_id':                self.session_id,
+            'learner_id':                self.learner_id,
+            'skill_id':                  self.skill_id,
+            'total_problems_attempted':  self.total_problems_attempted,
+            'total_problems_solved':     self.total_problems_solved,
+            'total_duration':            self.total_duration,
+            'average_score':             self.average_score,
+            'started_at':                self.started_at.isoformat(),
+            'ended_at':                  self.ended_at.isoformat() if self.ended_at else None,
+        }

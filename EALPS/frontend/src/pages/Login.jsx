@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../App'
 import api from '../api/client'
@@ -23,6 +23,7 @@ function GitHubIcon() {
 }
 
 const OAUTH_ERRORS = {
+  not_configured:        'This sign-in provider is not set up on this server.',
   oauth_cancelled:       'Sign-in was cancelled.',
   token_exchange_failed: 'Sign-in failed. Please try again.',
   userinfo_failed:       'Could not retrieve your profile.',
@@ -36,7 +37,14 @@ export default function Login() {
   const [error, setError]    = useState(
     OAUTH_ERRORS[searchParams.get('error')] || ''
   )
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading]   = useState(false)
+  const [oauthStatus, setOauth] = useState({ google: null, github: null })
+
+  useEffect(() => {
+    api.get('/auth/oauth/status')
+      .then(r => setOauth(r.data))
+      .catch(() => setOauth({ google: false, github: false }))
+  }, [])
 
   const handleSubmit = async e => {
     e.preventDefault()
@@ -52,6 +60,37 @@ export default function Login() {
     }
   }
 
+  const OAuthButton = ({ provider, icon: Icon, label, configured }) => {
+    const ready = configured === true
+
+    if (!ready) {
+      return (
+        <div
+          title={configured === null ? 'Checking…' : `${label} login is not configured`}
+          className="flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-slate-500 py-2.5 rounded-lg text-sm font-medium cursor-not-allowed select-none relative group"
+        >
+          <Icon />
+          {label}
+          {configured === false && (
+            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs bg-slate-800 text-slate-300 border border-white/10 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+              Not configured
+            </span>
+          )}
+        </div>
+      )
+    }
+
+    return (
+      <a
+        href={`/api/v1/auth/${provider}`}
+        className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white py-2.5 rounded-lg transition-colors text-sm font-medium"
+      >
+        <Icon />
+        {label}
+      </a>
+    )
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-md">
@@ -63,17 +102,19 @@ export default function Login() {
 
         <div className="glass rounded-2xl p-8 space-y-5">
           {/* OAuth buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            <a href="/api/v1/auth/google"
-              className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white py-2.5 rounded-lg transition-colors text-sm font-medium">
-              <GoogleIcon />
-              Google
-            </a>
-            <a href="/api/v1/auth/github"
-              className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white py-2.5 rounded-lg transition-colors text-sm font-medium">
-              <GitHubIcon />
-              GitHub
-            </a>
+          <div className="grid grid-cols-2 gap-3 relative pb-1">
+            <OAuthButton
+              provider="google"
+              icon={GoogleIcon}
+              label="Google"
+              configured={oauthStatus.google}
+            />
+            <OAuthButton
+              provider="github"
+              icon={GitHubIcon}
+              label="GitHub"
+              configured={oauthStatus.github}
+            />
           </div>
 
           <div className="flex items-center gap-3">
@@ -118,6 +159,37 @@ export default function Login() {
             Demo: admin@ealps.dev / admin123 &nbsp;|&nbsp; learner@ealps.dev / learner123
           </div>
         </div>
+
+        {/* Setup hint shown when either provider is unconfigured */}
+        {(oauthStatus.google === false || oauthStatus.github === false) && (
+          <div className="mt-4 p-4 rounded-xl border border-white/10 bg-white/5 text-xs text-slate-400 space-y-2">
+            <p className="font-semibold text-slate-300">To enable social login:</p>
+            {oauthStatus.google === false && (
+              <p>
+                <span className="text-white font-medium">Google — </span>
+                Create credentials at{' '}
+                <span className="text-brand-400">console.cloud.google.com</span>
+                {' '}→ APIs &amp; Services → Credentials → OAuth 2.0 Client ID.
+                Set redirect URI to{' '}
+                <code className="text-slate-300">http://localhost:5000/api/v1/auth/google/callback</code>
+                {' '}and add <code>GOOGLE_CLIENT_ID</code> / <code>GOOGLE_CLIENT_SECRET</code> to{' '}
+                <code>backend/.env</code>.
+              </p>
+            )}
+            {oauthStatus.github === false && (
+              <p>
+                <span className="text-white font-medium">GitHub — </span>
+                Register an app at{' '}
+                <span className="text-brand-400">github.com/settings/developers</span>
+                {' '}→ OAuth Apps → New OAuth App.
+                Set callback URL to{' '}
+                <code className="text-slate-300">http://localhost:5000/api/v1/auth/github/callback</code>
+                {' '}and add <code>GITHUB_CLIENT_ID</code> / <code>GITHUB_CLIENT_SECRET</code> to{' '}
+                <code>backend/.env</code>.
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

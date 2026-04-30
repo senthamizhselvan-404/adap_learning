@@ -2,7 +2,10 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from functools import wraps
 from sqlalchemy import distinct
-from ..models import Learner, Skill, MarketSkillData, LearningPathway, SkillDifficultyScore
+from ..models import (
+    Learner, Skill, MarketSkillData, LearningPathway, SkillDifficultyScore,
+    PracticeProblem, ProblemTestCase
+)
 from ..services.market_simulator import simulate_market_data, run_decay_detection
 from ..services.ollama_client import analyse_curriculum_gaps
 from ..extensions import db
@@ -184,3 +187,152 @@ def deactivate_user(user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Failed to deactivate user', 'detail': str(e)}), 500
+
+
+# ─────────────────────────────────────────
+# Admin: Practice Problem Management
+# ─────────────────────────────────────────
+@admin_bp.route('/practice/problems', methods=['POST'])
+@admin_required
+def create_practice_problem():
+    """
+    Create a new practice problem.
+    Body: {
+        title, description, difficulty, skill_id (optional),
+        languages_supported (list), time_limit, memory_limit,
+        test_cases: [{input_data, expected_output, is_hidden}, ...]
+    }
+    """
+    data = request.get_json(silent=True) or {}
+
+    # Validate required fields
+    title = data.get('title', '').strip()
+    description = data.get('description', '').strip()
+    if not title or not description:
+        return jsonify({'error': 'title and description are required'}), 400
+
+    difficulty = int(data.get('difficulty', 3))
+    if not (1 <= difficulty <= 5):
+        return jsonify({'error': 'difficulty must be between 1 and 5'}), 400
+
+    languages = data.get('languages_supported', ['python'])
+    if not languages or not isinstance(languages, list):
+        return jsonify({'error': 'languages_supported must be a non-empty list'}), 400
+
+    time_limit = int(data.get('time_limit', 5))
+    memory_limit = int(data.get('memory_limit', 256))
+
+    skill_id = data.get('skill_id')
+    if skill_id:
+        skill = db.session.get(Skill, skill_id)
+        if not skill:
+            return jsonify({'error': 'Skill not found'}), 404
+
+    try:
+        problem = PracticeProblem(
+            title=title,
+            description=description,
+            difficulty=difficulty,
+            skill_id=skill_id,
+            languages_supported=languages,
+            time_limit=time_limit,
+            memory_limit=memory_limit,
+        )
+        db.session.add(problem)
+        db.session.flush()
+
+        # Add test cases
+        test_cases = data.get('test_cases', [])
+        for tc in test_cases:
+            test_case = ProblemTestCase(
+                problem_id=problem.problem_id,
+                input_data=tc.get('input_data', ''),
+                expected_output=tc.get('expected_output', ''),
+                is_hidden=tc.get('is_hidden', False),
+            )
+            db.session.add(test_case)
+
+        db.session.commit()
+        return jsonify(problem.to_dict(include_test_cases=True)), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to create problem', 'detail': str(e)}), 500
+
+
+@admin_bp.route('/practice/problems', methods=['GET'])
+@admin_required
+def list_practice_problems():
+    """
+    List all practice problems (admin view).
+    """
+    page = request.args.get('page', 1, type=int)
+    per_page = min(request.args.get('per_page', 20, type=int), 100)
+
+    pagination = PracticeProblem.query.order_by(
+        PracticeProblem.difficulty, PracticeProblem.created_at.desc()
+    ).paginate(page=page, per_page=per_page, error_out=False)
+
+    return jsonify({
+        'problems': [p.to_dict(include_test_cases=True) for p in pagination.items],
+        'total': pagination.total,
+        'page': page,
+        'pages': pagination.pages,
+    })
+
+
+@admin_bp.route('/practice/problems/<problem_id>', methods=['PATCH'])
+@admin_required
+def update_practice_problem(problem_id):
+    """
+    Update a practice problem.
+    """
+    problem = db.session.get(PracticeProblem, problem_id)
+    if not problem:
+        return jsonify({'error': 'Problem not found'}), 404
+
+    data = request.get_json(silent=True) or {}
+
+    try:
+        if 'title' in data:
+            problem.title = data['title'].strip()
+        if 'description' in data:
+            problem.description = data['description'].strip()
+        if 'difficulty' in data:
+            difficulty = int(data['difficulty'])
+            if 1 <= difficulty <= 5:
+                problem.difficulty = difficulty
+        if 'languages_supported' in data:
+            problem.languages_supported = data['languages_supported']
+        if 'time_limit' in data:
+            problem.time_limit = int(data['time_limit'])
+        if 'memory_limit' in data:
+            problem.memory_limit = int(data['memory_limit'])
+
+        db.session.commit()
+        return jsonify(problem.to_dict(include_test_cases=True))
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to update problem', 'detail': str(e)}), 500
+
+
+@admin_bp.route('/practice/problems/<problem_id>', methods=['DELETE'])
+@admin_required
+def delete_practice_problem(problem_id):
+    """
+    Delete a practice problem and its test cases.
+    """
+    problem = db.session.get(PracticeProblem, problem_id)
+    if not problem:
+        return jsonify({'error': 'Problem not found'}), 404
+
+    try:
+        db.session.delete(problem)
+        db.session.commit()
+        return jsonify({'message': 'Problem deleted successfully'})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to delete problem', 'detail': str(e)}), 500
+

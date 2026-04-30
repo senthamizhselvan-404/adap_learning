@@ -9,6 +9,8 @@ import Roadmap       from './pages/Roadmap'
 import Skills        from './pages/Skills'
 import Admin         from './pages/Admin'
 import Curriculum    from './pages/Curriculum'
+import IDE           from './pages/IDE'
+import YouTube       from './pages/YouTube'
 import OAuthCallback from './pages/OAuthCallback'
 import Navbar        from './components/Navbar'
 
@@ -68,6 +70,8 @@ export default function App() {
             <Route path="/dashboard"     element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/roadmap/:id?"  element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
             <Route path="/skills"        element={<ProtectedRoute><Skills /></ProtectedRoute>} />
+            <Route path="/ide" element={<ProtectedRoute><IDE /></ProtectedRoute>} />
+            <Route path="/youtube"       element={<ProtectedRoute><YouTube /></ProtectedRoute>} />
             <Route path="/curriculum"    element={<ProtectedRoute><Curriculum /></ProtectedRoute>} />
             <Route path="/admin"         element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
             <Route path="*"              element={<Navigate to={user ? '/dashboard' : '/login'} />} />

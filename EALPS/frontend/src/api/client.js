@@ -35,4 +35,68 @@ api.interceptors.response.use(
   }
 )
 
+// ──────────────────────────────────────
+// Practice IDE API Methods
+// ──────────────────────────────────────
+
+export const practiceAPI = {
+  // Get all practice problems with optional filters
+  listProblems: (filters = {}) => {
+    const params = new URLSearchParams()
+    if (filters.skill_id) params.append('skill_id', filters.skill_id)
+    if (filters.difficulty) params.append('difficulty', filters.difficulty)
+    if (filters.language) params.append('language', filters.language)
+    if (filters.page) params.append('page', filters.page)
+    if (filters.per_page) params.append('per_page', filters.per_page)
+    return api.get(`/practice/problems/?${params.toString()}`)
+  },
+
+  // Get a specific problem with test cases
+  getProblem: (problemId) =>
+    api.get(`/practice/problems/${problemId}`),
+
+  // Execute code without saving
+  executeProblem: (problemId, code, language) =>
+    api.post(`/practice/problems/${problemId}/execute`, { code, language }),
+
+  // Submit solution (saves and validates)
+  submitProblem: (problemId, code, language) =>
+    api.post(`/practice/problems/${problemId}/submit`, { code, language }),
+
+  // Get practice sessions
+  listSessions: (page = 1) =>
+    api.get(`/practice/sessions/?page=${page}`),
+
+  // Get session details
+  getSession: (sessionId) =>
+    api.get(`/practice/sessions/${sessionId}`),
+
+  // Execute code in standalone IDE (no problem context)
+  executeCode: (code, language) =>
+    api.post('/practice/execute', { code, language }),
+}
+
+// ──────────────────────────────────────
+// Admin Practice API Methods
+// ──────────────────────────────────────
+
+export const adminPracticeAPI = {
+  // Create new problem
+  createProblem: (problemData) =>
+    api.post('/admin/practice/problems', problemData),
+
+  // List all problems (admin view)
+  listProblems: (page = 1) =>
+    api.get(`/admin/practice/problems?page=${page}`),
+
+  // Update problem
+  updateProblem: (problemId, updates) =>
+    api.patch(`/admin/practice/problems/${problemId}`, updates),
+
+  // Delete problem
+  deleteProblem: (problemId) =>
+    api.delete(`/admin/practice/problems/${problemId}`),
+}
+
 export default api
+

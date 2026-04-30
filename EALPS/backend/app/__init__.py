@@ -12,10 +12,11 @@ logger = logging.getLogger('ealps')
 
 
 def _migrate_db():
-    """Add new columns to existing SQLite DB (safe to run on every startup)."""
+    """Add new columns / tables to existing SQLite DB (safe to run on every startup)."""
     migrations = [
         "ALTER TABLE learners ADD COLUMN oauth_provider VARCHAR(50)",
         "ALTER TABLE learners ADD COLUMN oauth_id VARCHAR(255)",
+        # video_tracks table is created via db.create_all(); nothing to ALTER here
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
@@ -100,6 +101,9 @@ def create_app(config=Config):
     from .routes.admin      import admin_bp
     from .routes.curriculum import curriculum_bp
     from .routes.schedules  import schedules_bp
+    from .routes.practice   import practice_bp
+    from .routes.extension  import extension_bp
+    from .routes.youtube    import youtube_bp
 
     app.register_blueprint(auth_bp,       url_prefix='/api/v1/auth')
     app.register_blueprint(learners_bp,   url_prefix='/api/v1/learners')
@@ -108,6 +112,9 @@ def create_app(config=Config):
     app.register_blueprint(admin_bp,      url_prefix='/api/v1/admin')
     app.register_blueprint(curriculum_bp, url_prefix='/api/v1/curriculum')
     app.register_blueprint(schedules_bp,  url_prefix='/api/v1/schedules')
+    app.register_blueprint(practice_bp,   url_prefix='/api/v1/practice')
+    app.register_blueprint(extension_bp,  url_prefix='/api/v1/extension')
+    app.register_blueprint(youtube_bp,    url_prefix='/api/v1/youtube')
 
     # ── Health check ───────────────────────────────────────────────────────
     @app.route('/health')

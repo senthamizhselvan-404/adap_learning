@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Learning Pathway — YouTube Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0d0d0d;
+      color: #e5e5e5;
+      padding: 40px 20px;
+    }
+    h1 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+    p  { font-size: 13px; color: #888; margin-bottom: 28px; }
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 24px;
+      max-width: 900px;
+    }
+    .video-label {
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Learning Pathway — YouTube Tracker</h1>
+  <p>Each video below is automatically tracked. Claude AI detects the skill and logs your progress.</p>
+
+  <div class="video-grid">
+
+    <!--
+      HOW TO ADD A VIDEO:
+      Just paste this div anywhere in your app.
+      Change data-video-id to any YouTube video ID.
+      The tracker does everything else automatically.
+    -->
+
+    <div>
+      <div class="video-label">Video 1</div>
+      <div data-video-id="W6NZfCO5SIk"></div>
+      <!-- JavaScript Tutorial for Beginners -->
+    </div>
+
+    <div>
+      <div class="video-label">Video 2</div>
+      <div data-video-id="hf_4_SBeTQM"></div>
+      <!-- React Hooks Tutorial -->
+    </div>
+
+  </div>
+
+  <!--
+    STEP 1: Add your tracker script (just this one line)
+    Put it before </body>
+  -->
+  <script src="youtube-tracker.js"></script>
+
+</body>
+</html>

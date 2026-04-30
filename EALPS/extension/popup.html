@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EALPS Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="header">
+    <span class="logo">⬡</span>
+    <span class="logo-text">EALPS</span>
+    <span class="badge" id="status-badge">Loading…</span>
+  </div>
+
+  <!-- Not on a YouTube video -->
+  <div id="no-video" class="card hidden">
+    <p class="muted">Open a YouTube video to start tracking your learning progress.</p>
+  </div>
+
+  <!-- Video info card -->
+  <div id="video-card" class="card hidden">
+    <p class="video-title" id="video-title">—</p>
+    <p class="channel-name" id="channel-name">—</p>
+
+    <div class="divider"></div>
+
+    <!-- Skill match section -->
+    <div id="skill-section">
+      <div class="label">Mapped Skill</div>
+      <div class="skill-name" id="skill-name">Detecting…</div>
+
+      <div class="label mt">Progress</div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+      <div class="progress-meta">
+        <span id="progress-pct">0%</span>
+        <span id="time-left">— min left</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="actions">
+      <button class="btn-primary" id="btn-complete">Mark Complete</button>
+      <button class="btn-ghost"   id="btn-skip">Skip</button>
+    </div>
+  </div>
+
+  <!-- Settings row -->
+  <div class="footer">
+    <span class="muted">User ID:</span>
+    <input id="user-id-input" class="id-input" placeholder="Paste learner ID" />
+    <button class="btn-save" id="btn-save-id">Save</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
